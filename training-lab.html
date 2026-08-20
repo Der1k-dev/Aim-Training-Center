@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Lab</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='24' fill='none' stroke='%237FD1B9' stroke-width='4'/%3E%3Cline x1='32' y1='2' x2='32' y2='14' stroke='%237FD1B9' stroke-width='4'/%3E%3Cline x1='32' y1='50' x2='32' y2='62' stroke='%237FD1B9' stroke-width='4'/%3E%3Cline x1='2' y1='32' x2='14' y2='32' stroke='%237FD1B9' stroke-width='4'/%3E%3Cline x1='50' y1='32' x2='62' y2='32' stroke='%237FD1B9' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23F2C879'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#12151A;
+    --panel:#1B212A;
+    --panel-2:#212933;
+    --accent:#7FD1B9;
+    --accent-dim:#4E7F73;
+    --warn:#F2C879;
+    --text:#E8ECEF;
+    --muted:#7B8794;
+    --line:#2B3440;
+    --danger:#E08585;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(1200px 800px at 80% -10%, #1a2530 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
+    min-height:100vh;
+    padding:24px 16px 60px;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+
+  header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:22px;
+  }
+  .ring{
+    width:44px;height:44px;border-radius:50%;
+    border:2px solid var(--accent);
+    position:relative;flex:none;
+  }
+  .ring::before, .ring::after{
+    content:"";position:absolute;background:var(--accent);
+  }
+  .ring::before{width:2px;height:10px;left:50%;top:-6px;transform:translateX(-50%);}
+  .ring::after{width:10px;height:2px;top:50%;left:-6px;transform:translateY(-50%);}
+  .ring i{
+    position:absolute;inset:0;margin:auto;width:4px;height:4px;
+    background:var(--warn);border-radius:50%;
+  }
+  h1{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:22px;
+    letter-spacing:0.5px;
+    margin:0;
+    font-weight:600;
+  }
+  h1 span{color:var(--accent);}
+  .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+
+  nav{
+    display:flex;gap:8px;margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  nav button{
+    background:none;border:none;color:var(--muted);
+    padding:10px 16px;font-size:14px;cursor:pointer;
+    border-bottom:2px solid transparent;
+    font-family:inherit;
+    transition:color .15s, border-color .15s;
+  }
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent);}
+  nav button:hover{color:var(--text);}
+
+  section{display:none;}
+  section.active{display:block;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .panel h2{
+    font-size:15px;margin:0 0 4px;color:var(--text);
+    font-family:'Consolas','Courier New',monospace;
+    letter-spacing:0.3px;
+  }
+  .panel p.desc{color:var(--muted);font-size:13px;margin:0 0 16px;line-height:1.5;}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .controls label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;}
+  .controls input, .controls select{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    padding:7px 9px;border-radius:6px;font-size:13px;width:110px;font-family:inherit;
+  }
+  .btn{
+    background:var(--accent);color:#0D1310;border:none;
+    padding:9px 18px;border-radius:6px;font-size:13px;font-weight:600;
+    cursor:pointer;font-family:inherit;transition:transform .1s, background .15s;
+  }
+  .btn:hover{background:#8fe0c9;}
+  .btn:active{transform:scale(0.97);}
+  .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .btn.secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.warn{background:var(--warn);color:#241C05;}
+  .btn.danger{background:var(--danger);color:#2A0E0E;}
+
+  .stage{
+    position:relative;
+    width:100%;
+    height:420px;
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/40px 40px,
+      var(--panel-2);
+    border-radius:8px;
+    overflow:hidden;
+    cursor:crosshair;
+    border:1px solid var(--line);
+  }
+  .stage.dimmed:before{
+    content:"Натисни «Старт», щоб почати";
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--muted);font-size:14px;background:rgba(18,21,26,0.55);z-index:5;
+    text-align:center;padding:20px;
+  }
+  .target{
+    position:absolute;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #a9ecd9, var(--accent) 60%);
+    box-shadow:0 0 14px rgba(127,209,185,0.55);
+    transform:translate(-50%,-50%);
+    display:flex;align-items:center;justify-content:center;
+    animation:pop .12s ease-out;
+  }
+  @keyframes pop{from{transform:translate(-50%,-50%) scale(0.4);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+  .target.decoy{
+    background:radial-gradient(circle at 35% 30%, #f5cfc6, var(--danger) 60%);
+    box-shadow:0 0 14px rgba(224,133,133,0.5);
+  }
+
+  .stats{display:flex;gap:24px;flex-wrap:wrap;margin-top:14px;}
+  .stat{}
+  .stat .n{font-size:22px;font-family:'Consolas','Courier New',monospace;color:var(--accent);}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+
+  .flash-zone{
+    position:absolute;width:34px;height:34px;border-radius:50%;
+    background:var(--warn);
+    box-shadow:0 0 16px rgba(242,200,121,0.7);
+    transform:translate(-50%,-50%) scale(0.3);
+    opacity:0;
+    transition:transform .08s, opacity .08s;
+  }
+  .flash-zone.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .center-dot{
+    position:absolute;top:50%;left:50%;width:6px;height:6px;
+    background:var(--muted);border-radius:50%;transform:translate(-50%,-50%);
+    z-index:2;
+  }
+
+  .log{
+    max-height:150px;overflow-y:auto;font-family:'Consolas','Courier New',monospace;
+    font-size:12px;color:var(--muted);background:var(--panel-2);
+    border-radius:6px;padding:10px 12px;border:1px solid var(--line);
+  }
+  .log div{padding:2px 0;border-bottom:1px dashed rgba(255,255,255,0.04);}
+  .log div:last-child{border:none;}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:600px){.row2{grid-template-columns:1fr;}}
+
+  .note{
+    font-size:12px;color:var(--muted);background:var(--panel-2);
+    border-left:2px solid var(--accent-dim);padding:10px 14px;border-radius:0 6px 6px 0;
+    line-height:1.5;margin-top:6px;
+  }
+
+  .big-timer{
+    font-family:'Consolas','Courier New',monospace;
+    font-size:56px;text-align:center;color:var(--accent);margin:6px 0 4px;
+    letter-spacing:1px;
+  }
+  .phase-label{
+    text-align:center;color:var(--muted);font-size:13px;text-transform:uppercase;
+    letter-spacing:1px;margin-bottom:14px;
+  }
+  .phase-label.near{color:var(--warn);}
+  .phase-label.far{color:var(--accent);}
+
+  footer{
+    text-align:center;color:var(--muted);font-size:11px;margin-top:30px;
+  }
+
+  .hold-bar-wrap{
+    height:6px;background:var(--panel-2);border-radius:0 0 8px 8px;overflow:hidden;
+  }
+  .hold-bar{
+    height:100%;width:0%;background:var(--accent);transition:width .06s linear, background .15s;
+  }
+  .hold-bar.close{background:var(--warn);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="ring"><i></i></div>
+    <div>
+      <h1>Training <span>Lab</span></h1>
+      <div class="sub">Реакція · периферійна увага · вправи на фокус</div>
+    </div>
+  </header>
+
+  <nav>
+    <button class="tab-btn active" data-tab="reaction">Реакція / прицілювання</button>
+    <button class="tab-btn" data-tab="peripheral">Периферійна увага</button>
+    <button class="tab-btn" data-tab="tracking">Aim Tracking</button>
+    <button class="tab-btn" data-tab="osu">Rhythm Aim (osu-style)</button>
+  </nav>
+
+  <!-- REACTION / AIM TRAINER -->
+  <section id="reaction" class="active">
+    <div class="panel">
+      <h2>Reaction & Precision Trainer</h2>
+      <p class="desc">Цілі з'являються у випадковому місці. Клікай тільки по зелених — червоні "відволікаючі" цілі пропускай. Тренує швидкість реакції та точність кліку.</p>
+
+      <div class="controls">
+        <label>Тривалість (с)
+          <input type="number" id="r-duration" value="30" min="10" max="180">
+        </label>
+        <label>Розмір цілі (px)
+          <input type="number" id="r-size" value="42" min="16" max="100">
+        </label>
+        <label>Інтервал появи (мс)
+          <input type="number" id="r-interval" value="900" min="200" max="3000">
+        </label>
+        <label>Відволікаючі цілі
+          <select id="r-decoys">
+            <option value="0">Без них</option>
+            <option value="1" selected>Так</option>
+          </select>
+        </label>
+        <button class="btn" id="r-start">Старт</button>
+        <button class="btn secondary" id="r-stop">Стоп</button>
+      </div>
+
+      <div class="stage dimmed" id="r-stage"></div>
+
+      <div class="stats">
+        <div class="stat"><div class="n" id="r-hits">0</div><div class="l">Влучань</div></div>
+        <div class="stat"><div class="n" id="r-miss">0</div><div class="l">Промахів</div></div>
+        <div class="stat"><div class="n" id="r-avg">–</div><div class="l">Сер. реакція, мс</div></div>
+        <div class="stat"><div class="n" id="r-acc">–</div><div class="l">Точність, %</div></div>
+        <div class="stat"><div class="n" id="r-time">0</div><div class="l">Час, с</div></div>
+      </div>
+
+      <div class="panel" id="r-reco" style="background:var(--panel-2);margin-top:16px;display:none;">
+        <h2 style="margin-bottom:10px;">Рекомендації щодо чутливості / DPI</h2>
+        <div id="r-reco-body" style="font-size:13px;line-height:1.6;color:var(--text);"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PERIPHERAL AWARENESS -->
+  <section id="peripheral">
+    <div class="panel">
+      <h2>Peripheral Awareness Trainer</h2>
+      <p class="desc">Дивись у центральну точку і не відводь погляд. Спалахи з'являються по всьому полю, включно з краями — твоє завдання помітити їх боковим зором і клікнути якнайшвидше, не відриваючи фокус від центру. Це тренує саме те, на що ти скаржився — сприйняття деталей поза центром погляду.</p>
+
+      <div class="controls">
+        <label>Тривалість (с)
+          <input type="number" id="p-duration" value="45" min="15" max="180">
+        </label>
+        <label>Інтервал (мс)
+          <input type="number" id="p-interval" value="1400" min="500" max="4000">
+        </label>
+        <label>Час життя спалаху (мс)
+          <input type="number" id="p-life" value="700" min="300" max="2000">
+        </label>
+        <button class="btn" id="p-start">Старт</button>
+        <button class="btn secondary" id="p-stop">Стоп</button>
+      </div>
+
+      <div class="stage dimmed" id="p-stage">
+        <div class="center-dot"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="n" id="p-hits">0</div><div class="l">Помічено</div></div>
+        <div class="stat"><div class="n" id="p-miss">0</div><div class="l">Пропущено</div></div>
+        <div class="stat"><div class="n" id="p-avg">–</div><div class="l">Сер. реакція, мс</div></div>
+        <div class="stat"><div class="n" id="p-time">0</div><div class="l">Час, с</div></div>
+      </div>
+      <div class="note">Порада: тримай погляд на сірій точці по центру весь сеанс — сенс вправи саме в боковому помічанні, а не в перегляді всього поля.</div>
+
+      <div class="panel" id="p-reco" style="background:var(--panel-2);margin-top:16px;display:none;">
+        <h2 style="margin-bottom:10px;">Рекомендації щодо чутливості / DPI</h2>
+        <div id="p-reco-body" style="font-size:13px;line-height:1.6;color:var(--text);"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AIM TRACKING -->
+  <section id="tracking">
+    <div class="panel">
+      <h2>Aim Tracking</h2>
+      <p class="desc">Ціль рухається полем — веди курсор так, щоб він весь час був на ній. Утримай ціль безперервно <b>5 секунд</b> — вона зникне і одразу з'явиться нова, в іншому місці. Якщо збився — таймер утримання скидається і рахунок починається заново. Рівень складності (1–10) впливає на швидкість цілі, її розмір і різкість зміни напрямку.</p>
+
+      <div class="controls">
+        <label>Рівень складності
+          <select id="tr-level">
+            <option value="1">1 — найлегший</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10 — максимум</option>
+          </select>
+        </label>
+        <label>Тривалість сесії (с)
+          <input type="number" id="tr-duration" value="60" min="15" max="300">
+        </label>
+        <button class="btn" id="tr-start">Старт</button>
+        <button class="btn secondary" id="tr-stop">Стоп</button>
+      </div>
+
+      <div class="stage dimmed" id="tr-stage-wrap" style="padding:0;">
+        <canvas id="tr-canvas" style="width:100%;height:420px;display:block;"></canvas>
+        <div class="hold-bar-wrap">
+          <div class="hold-bar" id="tr-hold-bar"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="n" id="tr-cleared">0</div><div class="l">Цілей утримано</div></div>
+        <div class="stat"><div class="n" id="tr-streak">0</div><div class="l">Поточна серія</div></div>
+        <div class="stat"><div class="n" id="tr-acc">–</div><div class="l">На цілі, %</div></div>
+        <div class="stat"><div class="n" id="tr-time">0</div><div class="l">Час, с</div></div>
+      </div>
+      <div class="note">Смужка над полем показує прогрес поточного 5-секундного утримання. Голова нерухома — стеж курсором і поглядом одночасно.</div>
+
+      <div class="panel" id="tr-reco" style="background:var(--panel-2);margin-top:16px;display:none;">
+        <h2 style="margin-bottom:10px;">Рекомендації щодо чутливості / DPI</h2>
+        <div id="tr-reco-body" style="font-size:13px;line-height:1.6;color:var(--text);"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OSU-STYLE RHYTHM AIM -->
+  <section id="osu">
+    <div class="panel">
+      <h2>Rhythm Aim — click circles</h2>
+      <p class="desc">Кола з'являються по черзі, кожне з "кільцем наведення", яке стискається до розміру кола — клікай точно в момент, коли кільце майже збіглося з колом. Це тренує одночасно точність і відчуття таймінгу, як у osu!. Рівень 1–10 змінює розмір кіл і швидкість стискання кільця (AR/CS-подібно).</p>
+
+      <div class="controls">
+        <label>Рівень складності
+          <select id="o-level">
+            <option value="1">1 — найлегший</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10 — максимум</option>
+          </select>
+        </label>
+        <label>Тривалість (с)
+          <input type="number" id="o-duration" value="60" min="15" max="300">
+        </label>
+        <button class="btn" id="o-start">Старт</button>
+        <button class="btn secondary" id="o-stop">Стоп</button>
+      </div>
+
+      <div class="stage dimmed" id="o-stage-wrap" style="padding:0;">
+        <canvas id="o-canvas" style="width:100%;height:420px;display:block;"></canvas>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="n" id="o-combo">0</div><div class="l">Комбо</div></div>
+        <div class="stat"><div class="n" id="o-perfect">0</div><div class="l">Perfect</div></div>
+        <div class="stat"><div class="n" id="o-good">0</div><div class="l">Good</div></div>
+        <div class="stat"><div class="n" id="o-miss">0</div><div class="l">Miss</div></div>
+        <div class="stat"><div class="n" id="o-acc">–</div><div class="l">Точність, %</div></div>
+        <div class="stat"><div class="n" id="o-time">0</div><div class="l">Час, с</div></div>
+      </div>
+
+      <div class="panel" id="o-reco" style="background:var(--panel-2);margin-top:16px;display:none;">
+        <h2 style="margin-bottom:10px;">Рекомендації щодо чутливості / DPI</h2>
+        <div id="o-reco-body" style="font-size:13px;line-height:1.6;color:var(--text);"></div>
+        <div class="note" style="margin-top:12px;">Це евристика на основі лише цієї сесії, не універсальна істина. Міняй чутливість невеликими кроками (5–10%) і перепроходь сесію, щоб побачити реальну різницю в точності, а не орієнтуйся на одне число.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Всі дані рахуються локально у вкладці й не зберігаються після перезавантаження сторінки.</footer>
+</div>
+
+<script>
+// --- Tab switching ---
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ---------- SHARED: sensitivity/DPI recommendation builder ----------
+function buildSensitivityLines({precisionRatio=null, avgReactionMs=null, accuracyPct=null, minSamples, samples}){
+  const lines = [];
+  if(samples < minSamples){
+    lines.push(`Дані цієї сесії невеликі (${samples} влучань) — рекомендації нижче орієнтовні. Для впевнішого висновку пройди сесію довше або кілька разів.`);
+  }
+  if(precisionRatio!==null){
+    lines.push(`Точність влучання: в середньому курсор/клік був на <b>${Math.round(precisionRatio*100)}%</b> радіуса цілі від центру.`);
+  }
+  if(avgReactionMs!==null){
+    lines.push(`Середня швидкість реакції: <b>${Math.round(avgReactionMs)}мс</b>.`);
+  }
+  if(accuracyPct!==null){
+    lines.push(`Загальна точність: <b>${accuracyPct}%</b>.`);
+  }
+
+  const overshoot = precisionRatio!==null && precisionRatio>0.5;
+  const slow = avgReactionMs!==null && avgReactionMs>450;
+  const lowAcc = accuracyPct!==null && accuracyPct<45;
+
+  if(overshoot){
+    lines.push(`Курсор часто "проскакує" повз центр цілі — типова ознака завищеної чутливості/DPI, коли важко зупинитись рівно на цілі. Спробуй знизити чутливість (eDPI = DPI × чутливість у грі) на <b>10–15%</b> і повтори вправу.`);
+  } else if(slow || lowAcc){
+    lines.push(`Влучаєш більш-менш точно, але повільно/нестабільно — можливо, чутливості не вистачає, щоб швидко доводити курсор до цілі. Спробуй підняти чутливість (eDPI) на <b>10–15%</b>.`);
+  } else {
+    lines.push(`Точність і швидкість виглядають збалансовано — поточна чутливість, ймовірно, тобі підходить. Для тонкого налаштування зафіксуй DPI мишки (наприклад 400–800) і підбирай фінальне відчуття лише множником чутливості в самій грі.`);
+  }
+  lines.push(`Загальний орієнтир: DPI <b>400–1600</b>, частота опитування (polling rate) <b>500–1000 Гц</b>. Міняй щось одне за раз (DPI або чутливість) і перевіряй результат мінімум у 2–3 сесіях — одноразовий результат легко "зашумлений".`);
+  return lines;
+}
+function renderReco(bodyId, boxId, lines){
+  document.getElementById(bodyId).innerHTML = lines.map(l=>`<p style="margin:0 0 8px;">${l}</p>`).join('');
+  document.getElementById(boxId).style.display='block';
+}
+
+// ---------- REACTION TRAINER ----------
+(function(){
+  const stage = document.getElementById('r-stage');
+  let running=false, spawnTimer=null, tickTimer=null, endTime=0, remaining=0;
+  let hits=0, misses=0, reactionTimes=[], precisions=[], lastRadius=21;
+  let activeTarget=null, spawnedAt=0;
+
+  function reset(){
+    hits=0; misses=0; reactionTimes=[]; precisions=[];
+    update();
+    stage.innerHTML='';
+    document.getElementById('r-reco').style.display='none';
+  }
+  function update(){
+    document.getElementById('r-hits').textContent=hits;
+    document.getElementById('r-miss').textContent=misses;
+    document.getElementById('r-avg').textContent = reactionTimes.length? Math.round(reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length) : '–';
+    const totalAttempts = hits+misses;
+    document.getElementById('r-acc').textContent = totalAttempts? Math.round(hits/totalAttempts*100) : '–';
+  }
+  function spawn(){
+    if(!running) return;
+    if(activeTarget) activeTarget.remove();
+    const size = parseInt(document.getElementById('r-size').value)||42;
+    lastRadius = size/2;
+    const decoysOn = document.getElementById('r-decoys').value==='1';
+    const isDecoy = decoysOn && Math.random()<0.3;
+    const rect = stage.getBoundingClientRect();
+    const x = Math.random()*(rect.width-size)+size/2;
+    const y = Math.random()*(rect.height-size)+size/2;
+    const el = document.createElement('div');
+    el.className='target'+(isDecoy?' decoy':'');
+    el.style.width=size+'px';
+    el.style.height=size+'px';
+    el.style.left=x+'px';
+    el.style.top=y+'px';
+    spawnedAt = performance.now();
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(!running) return;
+      if(isDecoy){
+        misses++;
+      } else {
+        hits++;
+        reactionTimes.push(performance.now()-spawnedAt);
+        // click offset from target center (e.offsetX/Y relative to the element box)
+        const dx = e.offsetX - size/2;
+        const dy = e.offsetY - size/2;
+        precisions.push(Math.hypot(dx,dy));
+      }
+      update();
+      el.remove();
+      activeTarget=null;
+    });
+    stage.appendChild(el);
+    activeTarget=el;
+  }
+  stage.addEventListener('click',()=>{
+    if(!running) return;
+    // клік по пустому місцю поля (сюди долітають лише кліки, що не потрапили на .target,
+    // бо клік по цілі викликає stopPropagation у власному обробнику)
+    misses++;
+    update();
+  });
+
+  document.getElementById('r-start').addEventListener('click',()=>{
+    if(running) return;
+    running=true;
+    stage.classList.remove('dimmed');
+    reset();
+    const duration = parseInt(document.getElementById('r-duration').value)||30;
+    const interval = parseInt(document.getElementById('r-interval').value)||900;
+    remaining = duration;
+    document.getElementById('r-time').textContent = remaining;
+    spawn();
+    spawnTimer = setInterval(spawn, interval);
+    tickTimer = setInterval(()=>{
+      remaining--;
+      document.getElementById('r-time').textContent = Math.max(remaining,0);
+      if(remaining<=0) stopReaction();
+    },1000);
+  });
+  function stopReaction(){
+    running=false;
+    clearInterval(spawnTimer); clearInterval(tickTimer);
+    if(activeTarget){activeTarget.remove(); activeTarget=null;}
+    stage.classList.add('dimmed');
+    if(hits>0){
+      const avgPx = precisions.reduce((a,b)=>a+b,0)/precisions.length;
+      const precisionRatio = avgPx/lastRadius;
+      const avgReactionMs = reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;
+      const lines = buildSensitivityLines({precisionRatio, avgReactionMs, minSamples:8, samples:hits});
+      renderReco('r-reco-body','r-reco', lines);
+    }
+  }
+  document.getElementById('r-stop').addEventListener('click',stopReaction);
+})();
+
+// ---------- PERIPHERAL TRAINER ----------
+(function(){
+  const stage = document.getElementById('p-stage');
+  let running=false, spawnTimer=null, tickTimer=null, remaining=0;
+  let hits=0, misses=0, reactionTimes=[], precisions=[];
+  let activeFlash=null, spawnedAt=0, lifeTimer=null;
+  const FLASH_RADIUS = 17; // .flash-zone is 34px fixed in CSS
+
+  function reset(){
+    hits=0; misses=0; reactionTimes=[]; precisions=[];
+    update();
+    stage.querySelectorAll('.flash-zone').forEach(f=>f.remove());
+    document.getElementById('p-reco').style.display='none';
+  }
+  function update(){
+    document.getElementById('p-hits').textContent=hits;
+    document.getElementById('p-miss').textContent=misses;
+    document.getElementById('p-avg').textContent = reactionTimes.length? Math.round(reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length) : '–';
+  }
+  function spawn(){
+    if(!running) return;
+    const rect = stage.getBoundingClientRect();
+    const pad=20;
+    const x = Math.random()*(rect.width-pad*2)+pad;
+    const y = Math.random()*(rect.height-pad*2)+pad;
+    const el = document.createElement('div');
+    el.className='flash-zone';
+    el.style.left=x+'px';
+    el.style.top=y+'px';
+    stage.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+    spawnedAt = performance.now();
+    activeFlash = el;
+    const life = parseInt(document.getElementById('p-life').value)||700;
+    el.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(!running || el!==activeFlash) return;
+      hits++;
+      reactionTimes.push(performance.now()-spawnedAt);
+      const dx = e.offsetX - FLASH_RADIUS;
+      const dy = e.offsetY - FLASH_RADIUS;
+      precisions.push(Math.hypot(dx,dy));
+      update();
+      el.remove();
+      activeFlash=null;
+      clearTimeout(lifeTimer);
+    });
+    lifeTimer = setTimeout(()=>{
+      if(el.parentNode){
+        misses++;
+        update();
+        el.remove();
+        if(activeFlash===el) activeFlash=null;
+      }
+    }, life);
+  }
+  stage.addEventListener('click',()=>{
+    if(!running) return;
+    // клік по пустому місцю поля (без активного спалаху) теж рахуємо як промах
+    misses++;
+    update();
+  });
+
+  document.getElementById('p-start').addEventListener('click',()=>{
+    if(running) return;
+    running=true;
+    stage.classList.remove('dimmed');
+    reset();
+    const duration = parseInt(document.getElementById('p-duration').value)||45;
+    const interval = parseInt(document.getElementById('p-interval').value)||1400;
+    remaining = duration;
+    document.getElementById('p-time').textContent = remaining;
+    spawn();
+    spawnTimer = setInterval(spawn, interval);
+    tickTimer = setInterval(()=>{
+      remaining--;
+      document.getElementById('p-time').textContent = Math.max(remaining,0);
+      if(remaining<=0) stopPeripheral();
+    },1000);
+  });
+  function stopPeripheral(){
+    running=false;
+    clearInterval(spawnTimer); clearInterval(tickTimer); clearTimeout(lifeTimer);
+    stage.querySelectorAll('.flash-zone').forEach(f=>f.remove());
+    stage.classList.add('dimmed');
+    if(hits>0){
+      const avgPx = precisions.reduce((a,b)=>a+b,0)/precisions.length;
+      const precisionRatio = avgPx/FLASH_RADIUS;
+      const avgReactionMs = reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length;
+      const lines = buildSensitivityLines({precisionRatio, avgReactionMs, minSamples:8, samples:hits});
+      renderReco('p-reco-body','p-reco', lines);
+    }
+  }
+  document.getElementById('p-stop').addEventListener('click',stopPeripheral);
+})();
+
+// ---------- AIM TRACKING ----------
+(function(){
+  const wrap = document.getElementById('tr-stage-wrap');
+  const canvas = document.getElementById('tr-canvas');
+  const ctx = canvas.getContext('2d');
+  const holdBar = document.getElementById('tr-hold-bar');
+  let running=false, raf=null, tickTimer=null, remaining=0;
+  let startTs=0, lastTs=0;
+  let mouseX=null, mouseY=null;
+  let targetX=0, targetY=0, dirAngle=0, nextTurnAt=0;
+  let holdMs=0, cleared=0, streak=0;
+  let onTargetFrames=0, totalFrames=0;
+  let driftSum=0, driftFrames=0;
+  const HOLD_REQUIRED = 5000; // ms
+
+  // level -> {speed(px/s), radius(px), turnFreq(s), turnSharpness(0-1)}
+  function levelParams(){
+    const lvl = parseInt(document.getElementById('tr-level').value)||5;
+    const speed = 60 + (lvl-1)*22;          // 60 .. ~258 px/s
+    const radius = Math.max(20 - (lvl-1)*1.4, 7); // 20 .. ~7.4 px
+    const turnFreq = Math.max(1.6 - (lvl-1)*0.11, 0.5); // seconds between direction changes
+    const turnSharp = 0.35 + (lvl-1)*0.06;  // how sharply it can turn
+    return {speed, radius, turnFreq, turnSharp, lvl};
+  }
+
+  function resizeCanvas(){
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 420;
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawField(){
+    const w=canvas.width, h=canvas.height;
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#1a2530');
+    g.addColorStop(1,'#161c24');
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(255,255,255,0.03)';
+    ctx.lineWidth=1;
+    for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+    for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  }
+
+  function spawnTarget(){
+    const p = levelParams();
+    const w=canvas.width, h=canvas.height;
+    const pad = p.radius+10;
+    targetX = pad + Math.random()*(w-pad*2);
+    targetY = pad + Math.random()*(h-pad*2);
+    dirAngle = Math.random()*Math.PI*2;
+    nextTurnAt = 0;
+    holdMs = 0;
+    updateHoldBar();
+  }
+
+  function updateHoldBar(){
+    const pct = Math.min(holdMs/HOLD_REQUIRED*100,100);
+    holdBar.style.width = pct+'%';
+    holdBar.classList.toggle('close', pct>65);
+  }
+
+  function drawTarget(){
+    const p = levelParams();
+    ctx.save();
+    ctx.shadowColor='rgba(224,133,133,0.85)';
+    ctx.shadowBlur=14;
+    ctx.fillStyle='#E08585';
+    ctx.beginPath();
+    ctx.arc(targetX,targetY,p.radius,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // ring showing hold progress
+    const pct = Math.min(holdMs/HOLD_REQUIRED,1);
+    if(pct>0){
+      ctx.strokeStyle='rgba(127,209,185,0.9)';
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.arc(targetX,targetY,p.radius+7,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+      ctx.stroke();
+    }
+  }
+
+  function drawCursor(){
+    if(mouseX===null) return;
+    ctx.strokeStyle='rgba(255,255,255,0.5)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(mouseX-8,mouseY);ctx.lineTo(mouseX+8,mouseY);
+    ctx.moveTo(mouseX,mouseY-8);ctx.lineTo(mouseX,mouseY+8);
+    ctx.stroke();
+  }
+
+  function step(dtSec){
+    const p = levelParams();
+    const w=canvas.width, h=canvas.height;
+    nextTurnAt -= dtSec;
+    if(nextTurnAt<=0){
+      const maxTurn = p.turnSharp*Math.PI; // radians
+      dirAngle += (Math.random()*2-1)*maxTurn;
+      nextTurnAt = p.turnFreq*(0.6+Math.random()*0.8);
+    }
+    let nx = targetX + Math.cos(dirAngle)*p.speed*dtSec;
+    let ny = targetY + Math.sin(dirAngle)*p.speed*dtSec;
+    const pad = p.radius+6;
+    if(nx<pad){nx=pad; dirAngle = Math.PI - dirAngle;}
+    if(nx>w-pad){nx=w-pad; dirAngle = Math.PI - dirAngle;}
+    if(ny<pad){ny=pad; dirAngle = -dirAngle;}
+    if(ny>h-pad){ny=h-pad; dirAngle = -dirAngle;}
+    targetX=nx; targetY=ny;
+  }
+
+  function frame(ts){
+    if(!running) return;
+    if(!startTs) startTs=ts;
+    if(!lastTs) lastTs=ts;
+    const dtSec = Math.min((ts-lastTs)/1000, 0.05);
+    lastTs = ts;
+
+    step(dtSec);
+    drawField();
+    drawTarget();
+    drawCursor();
+
+    const p = levelParams();
+    if(mouseX!==null){
+      const dist = Math.hypot(mouseX-targetX, mouseY-targetY);
+      totalFrames++;
+      if(dist<=p.radius+4){
+        onTargetFrames++;
+        holdMs += dtSec*1000;
+        if(holdMs>=HOLD_REQUIRED){
+          cleared++; streak++;
+          document.getElementById('tr-cleared').textContent=cleared;
+          document.getElementById('tr-streak').textContent=streak;
+          spawnTarget();
+        }
+      } else {
+        if(holdMs>0) streak = 0;
+        holdMs = Math.max(holdMs - dtSec*1800, 0); // decays fast when you lose it
+        document.getElementById('tr-streak').textContent=streak;
+        // наскільки далеко курсор "пролітає" повз ціль, коли не втримує її
+        driftSum += dist/(p.radius+4);
+        driftFrames++;
+      }
+      updateHoldBar();
+      const pct = totalFrames? Math.round(onTargetFrames/totalFrames*100) : 0;
+      document.getElementById('tr-acc').textContent = pct;
+    }
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  canvas.addEventListener('mousemove',(e)=>{
+    const rect = canvas.getBoundingClientRect();
+    mouseX = (e.clientX-rect.left) * (canvas.width/rect.width);
+    mouseY = (e.clientY-rect.top) * (canvas.height/rect.height);
+  });
+  canvas.addEventListener('mouseleave',()=>{ mouseX=null; mouseY=null; });
+
+  function start(){
+    if(running) return;
+    resizeCanvas();
+    running=true;
+    startTs=0; lastTs=0;
+    cleared=0; streak=0; holdMs=0; onTargetFrames=0; totalFrames=0;
+    driftSum=0; driftFrames=0;
+    document.getElementById('tr-cleared').textContent='0';
+    document.getElementById('tr-streak').textContent='0';
+    document.getElementById('tr-acc').textContent='–';
+    document.getElementById('tr-reco').style.display='none';
+    document.getElementById('tr-stage-wrap').classList.remove('dimmed');
+    spawnTarget();
+    const duration = parseInt(document.getElementById('tr-duration').value)||60;
+    remaining = duration;
+    document.getElementById('tr-time').textContent = remaining;
+    raf = requestAnimationFrame(frame);
+    tickTimer = setInterval(()=>{
+      remaining--;
+      document.getElementById('tr-time').textContent = Math.max(remaining,0);
+      if(remaining<=0) stop();
+    },1000);
+  }
+  function stop(){
+    running=false;
+    cancelAnimationFrame(raf);
+    clearInterval(tickTimer);
+    holdBar.style.width='0%';
+    document.getElementById('tr-stage-wrap').classList.add('dimmed');
+    if(totalFrames>60){
+      const accuracyPct = Math.round(onTargetFrames/totalFrames*100);
+      // driftRatio ~1 = курсор трохи за межею цілі; більше 2 = курсор часто далеко відлітає
+      const driftRatio = driftFrames? driftSum/driftFrames : 1;
+      const precisionRatio = Math.min(Math.max((driftRatio-1)/2, 0), 1);
+      const lines = buildSensitivityLines({
+        precisionRatio,
+        accuracyPct,
+        minSamples: 300,
+        samples: totalFrames
+      });
+      renderReco('tr-reco-body','tr-reco', lines);
+    }
+  }
+  document.getElementById('tr-start').addEventListener('click',start);
+  document.getElementById('tr-stop').addEventListener('click',stop);
+
+  document.querySelector('[data-tab="tracking"]').addEventListener('click', ()=>{
+    setTimeout(resizeCanvas, 30);
+  });
+  setTimeout(resizeCanvas, 100);
+})();
+
+// ---------- RHYTHM AIM (osu-style) ----------
+(function(){
+  const wrap = document.getElementById('o-stage-wrap');
+  const canvas = document.getElementById('o-canvas');
+  const ctx = canvas.getContext('2d');
+  let running=false, raf=null, tickTimer=null, remaining=0;
+  let circle=null; // {x,y,r,spawnTs,approachMs,resolved}
+  let combo=0, perfect=0, good=0, miss=0;
+  let offsets=[]; // ms, negative=early, positive=late (only for actual clicks, not auto-miss)
+  let precisions=[]; // px distance from center, relative clicks only
+  let now=0;
+
+  function levelParams(){
+    const lvl = parseInt(document.getElementById('o-level').value)||5;
+    const radius = Math.max(46 - (lvl-1)*3.4, 14);      // CS: 46 .. ~15
+    const approachMs = Math.max(1500 - (lvl-1)*115, 420); // AR: 1500 .. ~420
+    return {radius, approachMs, lvl};
+  }
+
+  function resizeCanvas(){
+    const rect = wrap.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 420;
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawField(){
+    const w=canvas.width, h=canvas.height;
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'#1a2530');
+    g.addColorStop(1,'#161c24');
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function spawnCircle(){
+    const p = levelParams();
+    const w=canvas.width, h=canvas.height;
+    const pad = p.radius+16;
+    circle = {
+      x: pad + Math.random()*(w-pad*2),
+      y: pad + Math.random()*(h-pad*2),
+      r: p.radius,
+      approachMs: p.approachMs,
+      spawnTs: now,
+      resolved: false
+    };
+  }
+
+  function drawCircle(){
+    if(!circle) return;
+    const t = now - circle.spawnTs; // ms since spawn
+    const progress = Math.min(t/circle.approachMs, 1); // 0..1, 1 = approach circle reached target size
+    const approachR = circle.r + (circle.r*2.4)*(1-progress);
+
+    // hit circle
+    ctx.save();
+    ctx.shadowColor='rgba(127,209,185,0.8)';
+    ctx.shadowBlur=12;
+    ctx.fillStyle='#7FD1B9';
+    ctx.beginPath();
+    ctx.arc(circle.x,circle.y,circle.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // approach ring
+    ctx.strokeStyle='rgba(242,200,121,0.85)';
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.arc(circle.x,circle.y,Math.max(approachR,circle.r),0,Math.PI*2);
+    ctx.stroke();
+  }
+
+  function resolveMiss(){
+    if(!circle || circle.resolved) return;
+    circle.resolved=true;
+    miss++; combo=0;
+    updateStats();
+    setTimeout(()=>{ if(running) spawnCircle(); }, 220);
+  }
+
+  function updateStats(){
+    document.getElementById('o-combo').textContent=combo;
+    document.getElementById('o-perfect').textContent=perfect;
+    document.getElementById('o-good').textContent=good;
+    document.getElementById('o-miss').textContent=miss;
+    const total = perfect+good+miss;
+    const acc = total? Math.round((perfect*1 + good*0.6)/total*100) : 0;
+    document.getElementById('o-acc').textContent = total? acc : '–';
+  }
+
+  canvas.addEventListener('click',(e)=>{
+    if(!running) return;
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX-rect.left) * (canvas.width/rect.width);
+    const cy = (e.clientY-rect.top) * (canvas.height/rect.height);
+
+    if(!circle || circle.resolved){
+      // клік по пустому місцю - активного кола зараз немає
+      miss++; combo=0;
+      updateStats();
+      return;
+    }
+
+    const dist = Math.hypot(cx-circle.x, cy-circle.y);
+    if(dist>circle.r*1.15){
+      // clicked off-circle: treat as miss, no offset/precision recorded
+      resolveMiss();
+      return;
+    }
+    circle.resolved=true;
+    const t = now - circle.spawnTs;
+    const offset = t - circle.approachMs; // negative=early, positive=late
+    offsets.push(offset);
+    precisions.push(dist);
+    const perfectWindow = Math.max(circle.approachMs*0.10, 60);
+    const goodWindow = Math.max(circle.approachMs*0.22, 130);
+    if(Math.abs(offset)<=perfectWindow){ perfect++; combo++; }
+    else if(Math.abs(offset)<=goodWindow){ good++; combo++; }
+    else { miss++; combo=0; }
+    updateStats();
+    setTimeout(()=>{ if(running) spawnCircle(); }, 160);
+  });
+
+  function frame(ts){
+    if(!running) return;
+    now = ts;
+    drawField();
+    if(circle && !circle.resolved){
+      const t = now - circle.spawnTs;
+      if(t > circle.approachMs + 180){ resolveMiss(); }
+      else drawCircle();
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  function buildRecommendations(){
+    const body = document.getElementById('o-reco-body');
+    const box = document.getElementById('o-reco');
+    if(offsets.length<1){
+      body.innerHTML = `<p style="margin:0;">Ще немає жодного точного влучання цієї сесії — рекомендацій поки не можу побудувати. Зіграй сесію, влучаючи хоча б у кілька кіл, і спробуй ще раз.</p>`;
+      box.style.display='block';
+      return;
+    }
+    const avgOffset = offsets.reduce((a,b)=>a+b,0)/offsets.length;
+    const avgPrecisionPx = precisions.reduce((a,b)=>a+b,0)/precisions.length;
+    const p = levelParams();
+    const precisionRatio = avgPrecisionPx / p.radius; // 0 = ідеально в центр, 1 = на краю
+
+    let lines = [];
+    if(offsets.length<4){
+      lines.push(`Дані цієї сесії невеликі (${offsets.length} влучань) — рекомендації нижче орієнтовні.`);
+    }
+    lines.push(`Середнє відхилення клацання від центру кола: <b>${avgPrecisionPx.toFixed(1)}px</b> (${Math.round(precisionRatio*100)}% від радіуса кола).`);
+    lines.push(`Середній таймінг: <b>${avgOffset>0?'+':''}${Math.round(avgOffset)}мс</b> ${avgOffset<-15?'(в середньому рано)':avgOffset>15?'(в середньому пізно)':'(близько до ідеалу)'}.`);
+
+    if(precisionRatio>0.55 && avgOffset<-15){
+      lines.push(`Схоже, курсор "проскакує" повз центр і клацання відбувається зарано — типова ознака завищеної чутливості/DPI, коли важко зупинити рух точно на цілі. Спробуй знизити чутливість (або eDPI = DPI × чутливість у грі) приблизно на <b>10–15%</b> і повтори сесію.`);
+    } else if(precisionRatio>0.55 && avgOffset>=-15 && avgOffset<=15){
+      lines.push(`Таймінг непоганий, але клацання часто далеко від центру — можливо, справа не в швидкості, а в різкості рухів (мала мʼязова пам'ять на малих доводках). Спробуй трохи <b>знизити DPI</b> і збільшити фізичну амплітуду руху мишкою (більший коврик), а не тільки чутливість.`);
+    } else if(precisionRatio<=0.3 && avgOffset>15){
+      lines.push(`Влучаєш точно в центр, але із запізненням — рука фізично не встигає доводити курсор до цілі вчасно. Спробуй підняти чутливість (або eDPI) на <b>10–15%</b>, щоб швидше долати відстань, зберігаючи точність.`);
+    } else if(precisionRatio<=0.3 && avgOffset>=-15 && avgOffset<=15){
+      lines.push(`Хороший баланс точності й таймінгу — поточна чутливість, ймовірно, тобі підходить. Замість зміни чутливості спробуй зафіксувати DPI мишки (наприклад 400–800) і підбирати фінальне відчуття лише множником чутливості в самій грі — це стабільніше для м'язової пам'яті, ніж часта зміна DPI.`);
+    } else {
+      lines.push(`Результат змішаний — точність і таймінг тягнуть у різні боки. Перед тим як міняти чутливість, повтори сесію ще раз на тому ж рівні складності: якщо цифри сильно скачуть від спроби до спроби, це радше питання розминки/втоми, ніж налаштувань миші.`);
+    }
+
+    lines.push(`Загальні орієнтири: більшість гравців у шутерах комфортно почуваються на DPI <b>400–1600</b> з частотою опитування (polling rate) <b>500–1000 Гц</b>. Змінюй одну змінну за раз (або DPI, або чутливість у грі) і тестуй мінімум 2–3 сесії перед висновком — одноразовий результат легко "зашумлений".`);
+
+    body.innerHTML = lines.map(l=>`<p style="margin:0 0 8px;">${l}</p>`).join('');
+    box.style.display='block';
+  }
+
+  function start(){
+    if(running) return;
+    resizeCanvas();
+    running=true;
+    combo=0; perfect=0; good=0; miss=0;
+    offsets=[]; precisions=[];
+    updateStats();
+    document.getElementById('o-reco').style.display='none';
+    document.getElementById('o-stage-wrap').classList.remove('dimmed');
+    now=performance.now();
+    spawnCircle();
+    const duration = parseInt(document.getElementById('o-duration').value)||60;
+    remaining = duration;
+    document.getElementById('o-time').textContent = remaining;
+    raf = requestAnimationFrame(frame);
+    tickTimer = setInterval(()=>{
+      remaining--;
+      document.getElementById('o-time').textContent = Math.max(remaining,0);
+      if(remaining<=0) stop();
+    },1000);
+  }
+  function stop(){
+    if(!running) return;
+    running=false;
+    cancelAnimationFrame(raf);
+    clearInterval(tickTimer);
+    circle=null;
+    document.getElementById('o-stage-wrap').classList.add('dimmed');
+    buildRecommendations();
+  }
+  document.getElementById('o-start').addEventListener('click',start);
+  document.getElementById('o-stop').addEventListener('click',stop);
+
+  document.querySelector('[data-tab="osu"]').addEventListener('click', ()=>{
+    setTimeout(resizeCanvas, 30);
+  });
+  setTimeout(resizeCanvas, 100);
+})();
+</script>
+</body>
+</html>
